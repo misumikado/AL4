@@ -46,4 +46,3 @@ private: // メンバ変数
 	BYTE key[256] = {};
 	BYTE keyPre[256] = {};
 };
-

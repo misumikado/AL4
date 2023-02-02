@@ -105,7 +105,7 @@ Object3d* Object3d::Create()
 	}
 
 	//スケールをセット
-	float scale_val = 10;
+	float scale_val = 5;
 	object3d->scale = { scale_val,scale_val,scale_val };
 
 	return object3d;
@@ -473,12 +473,13 @@ bool Object3d::LoadTexture(const std::string& directoryPath, const std::string& 
 }
 
 void Object3d::CreateModel()
+
 {
 	//ファイルストリーム
 	std::ifstream file;
 	//.objファイルを開く
 	//file.open("Resources/triangle_tex/triangle_tex.obj");
-	const string modelname = "Circle";
+	const string modelname = "sphere";
 	const string filename = modelname + ".obj";//"triangle_mat.obj"
 	const string directoryPath = "Resources/" + modelname + "/";//"Resources/triangle_mat/"
 	file.open(directoryPath + filename);//"Resources/triangle_mat/triangle_mat.obj"
@@ -493,6 +494,7 @@ void Object3d::CreateModel()
 	string line;
 	while (getline(file, line)) {
 
+		//1行分の文字列をストリームに変換して解析しやすくなる
 		std::istringstream line_stream(line);
 
 		//半角スペース区切りで行の先頭文字列を取得
@@ -519,7 +521,10 @@ void Object3d::CreateModel()
 			line_stream >> position.z;
 			//座標データに追加
 			positions.emplace_back(position);
-
+			//頂点データに追加
+			//VertexPosNormalUv vertex{};
+			//vertex.pos = position;
+			//vertices.emplace_back(vertex);
 		}
 		//先頭文字がvtならテクスチャ
 		if (key == "vt") {
@@ -572,6 +577,125 @@ void Object3d::CreateModel()
 	HRESULT result = S_FALSE;
 
 	std::vector<VertexPosNormalUv> realVertices;
+	//// 頂点座標の計算（重複あり）
+	//{
+	//	realVertices.resize((division + 1) * 2);
+	//	int index = 0;
+	//	float zValue;
+
+	//	// 底面
+	//	zValue = prizmHeight / 2.0f;
+	//	for (int i = 0; i < division; i++)
+	//	{
+	//		XMFLOAT3 vertex;
+	//		vertex.x = radius * sinf(XM_2PI / division * i);
+	//		vertex.y = radius * cosf(XM_2PI / division * i);
+	//		vertex.z = zValue;
+	//		realVertices[index++].pos = vertex;
+	//	}
+	//	realVertices[index++].pos = XMFLOAT3(0, 0, zValue);	// 底面の中心点
+	//	// 天面
+	//	zValue = -prizmHeight / 2.0f;
+	//	for (int i = 0; i < division; i++)
+	//	{
+	//		XMFLOAT3 vertex;
+	//		vertex.x = radius * sinf(XM_2PI / division * i);
+	//		vertex.y = radius * cosf(XM_2PI / division * i);
+	//		vertex.z = zValue;
+	//		realVertices[index++].pos = vertex;
+	//	}
+	//	realVertices[index++].pos = XMFLOAT3(0, 0, zValue);	// 天面の中心点
+	//}
+
+	//// 頂点座標の計算（重複なし）
+	//{
+	//	int index = 0;
+	//	// 底面
+	//	for (int i = 0; i < division; i++)
+	//	{
+	//		unsigned short index0 = i + 1;
+	//		unsigned short index1 = i;
+	//		unsigned short index2 = division;
+
+	//		vertices[index++] = realVertices[index0];
+	//		vertices[index++] = realVertices[index1];
+	//		vertices[index++] = realVertices[index2]; // 底面の中心点
+	//	}
+	//	// 底面の最後の三角形の1番目のインデックスを0に書き換え
+	//	vertices[index - 3] = realVertices[0];
+
+	//	int topStart = division + 1;
+	//	// 天面
+	//	for (int i = 0; i < division; i++)
+	//	{
+	//		unsigned short index0 = topStart + i;
+	//		unsigned short index1 = topStart + i + 1;
+	//		unsigned short index2 = topStart + division;
+
+	//		vertices[index++] = realVertices[index0];
+	//		vertices[index++] = realVertices[index1];
+	//		vertices[index++] = realVertices[index2]; // 天面の中心点
+	//	}
+	//	// 天面の最後の三角形の1番目のインデックスを0に書き換え
+	//	vertices[index - 2] = realVertices[topStart];
+
+	//	// 側面
+	//	for (int i = 0; i < division; i++)
+	//	{
+	//		unsigned short index0 = i + 1;
+	//		unsigned short index1 = topStart + i + 1;
+	//		unsigned short index2 = i;
+	//		unsigned short index3 = topStart + i;
+
+	//		if (i == division - 1)
+	//		{
+	//			index0 = 0;
+	//			index1 = topStart;
+	//		}
+
+	//		vertices[index++] = realVertices[index0];
+	//		vertices[index++] = realVertices[index1];
+	//		vertices[index++] = realVertices[index2];
+
+	//		vertices[index++] = realVertices[index2];
+	//		vertices[index++] = realVertices[index1];
+	//		vertices[index++] = realVertices[index3];
+	//	}
+	//}
+
+	//// 頂点インデックスの設定
+	//{
+	//	for (int i = 0; i < _countof(indices); i++)
+	//	{
+	//		indices[i] = i;
+	//	}
+	//}
+
+	//// 法線方向の計算
+	//for (int i = 0; i < _countof(indices) / 3; i++)
+	//{// 三角形１つごとに計算していく
+	//	// 三角形のインデックスを取得
+	//	unsigned short index0 = indices[i * 3 + 0];
+	//	unsigned short index1 = indices[i * 3 + 1];
+	//	unsigned short index2 = indices[i * 3 + 2];
+	//	// 三角形を構成する頂点座標をベクトルに代入
+	//	XMVECTOR p0 = XMLoadFloat3(&vertices[index0].pos);
+	//	XMVECTOR p1 = XMLoadFloat3(&vertices[index1].pos);
+	//	XMVECTOR p2 = XMLoadFloat3(&vertices[index2].pos);
+	//	// p0→p1ベクトル、p0→p2ベクトルを計算
+	//	XMVECTOR v1 = XMVectorSubtract(p1, p0);
+	//	XMVECTOR v2 = XMVectorSubtract(p2, p0);
+	//	// 外積は両方から垂直なベクトル
+	//	XMVECTOR normal = XMVector3Cross(v1, v2);
+	//	// 正規化（長さを1にする)
+	//	normal = XMVector3Normalize(normal);
+	//	// 求めた法線を頂点データに代入
+	//	XMStoreFloat3(&vertices[index0].normal, normal);
+	//	XMStoreFloat3(&vertices[index1].normal, normal);
+	//	XMStoreFloat3(&vertices[index2].normal, normal);
+	//}
+
+	//UINT sizeVB = static_cast<UINT>(sizeof(vertices));
 
 	UINT sizeVB = static_cast<UINT>(sizeof(VertexPosNormalUv) * vertices.size());
 	UINT sizeIB = static_cast<UINT>(sizeof(unsigned short) * indices.size());
@@ -659,10 +783,10 @@ bool Object3d::Initialize()
 	result = device->CreateCommittedResource(
 		&heapProps, // アップロード可能
 		D3D12_HEAP_FLAG_NONE, &resourceDesc[0], D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&ConstBuffB0));
+		IID_PPV_ARGS(&constBuffB0));
 	assert(SUCCEEDED(result));
 
-
+	
 
 	// 定数バッファの生成
 	result = device->CreateCommittedResource(
@@ -671,7 +795,7 @@ bool Object3d::Initialize()
 		&resourceDesc[1],
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&ConstBuffB1));
+		IID_PPV_ARGS(&constBuffB1));
 	assert(SUCCEEDED(result));
 
 	return true;
@@ -705,18 +829,18 @@ void Object3d::Update()
 
 	// 定数バッファへデータ転送
 	ConstBufferDataB0* constMap = nullptr;
-	result = ConstBuffB0->Map(0, nullptr, (void**)&constMap);
+	result = constBuffB0->Map(0, nullptr, (void**)&constMap);
 	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
-	ConstBuffB0->Unmap(0, nullptr);
+	constBuffB0->Unmap(0, nullptr);
 
 	// 定数バッファへデータ転送
 	ConstBufferDataB1* constMap1 = nullptr;
-	result = ConstBuffB1->Map(0, nullptr, (void**)&constMap1);
+	result = constBuffB1->Map(0, nullptr, (void**)&constMap1);
 	constMap1->ambient = material.ambient;
 	constMap1->diffuse = material.diffuse;
 	constMap1->specular = material.specular;
 	constMap1->alpha = material.alpha;
-	ConstBuffB1->Unmap(0, nullptr);
+	constBuffB1->Unmap(0, nullptr);
 }
 
 void Object3d::Draw()
@@ -735,8 +859,8 @@ void Object3d::Draw()
 	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	// 定数バッファビューをセット
-	cmdList->SetGraphicsRootConstantBufferView(0, ConstBuffB0->GetGPUVirtualAddress());
-	cmdList->SetGraphicsRootConstantBufferView(1, ConstBuffB1->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootConstantBufferView(0, constBuffB0->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootConstantBufferView(1, constBuffB1->GetGPUVirtualAddress());
 	// シェーダリソースビューをセット
 	cmdList->SetGraphicsRootDescriptorTable(2, gpuDescHandleSRV);
 	// 描画コマンド
