@@ -112,16 +112,16 @@ void GameScene::Update()
 		sprite1->SetPosition(position);
 	}
 
-	//球移動
-	{
-		XMVECTOR moveY = XMVectorSet(0, 0.01f, 0, 0);
-		if (input->PushKey(DIK_NUMPAD8)) { sphere.center += moveY; }
-		else if (input->PushKey(DIK_NUMPAD2)) { sphere.center -= moveY; }
+	////球移動
+	//{
+	//	XMVECTOR moveY = XMVectorSet(0, 0.01f, 0, 0);
+	//	if (input->PushKey(DIK_NUMPAD8)) { sphere.center += moveY; }
+	//	else if (input->PushKey(DIK_NUMPAD2)) { sphere.center -= moveY; }
 
-		XMVECTOR moveX = XMVectorSet(0.01f, 0, 0, 0);
-		if (input->PushKey(DIK_NUMPAD6)) { sphere.center += moveX; }
-		else if (input->PushKey(DIK_NUMPAD4)) { sphere.center -= moveX; }
-	}
+	//	XMVECTOR moveX = XMVectorSet(0.01f, 0, 0, 0);
+	//	if (input->PushKey(DIK_NUMPAD6)) { sphere.center += moveX; }
+	//	else if (input->PushKey(DIK_NUMPAD4)) { sphere.center -= moveX; }
+	//}
 
 	//stringstreamで変数の値を埋め込んで整形する
 	std::ostringstream spherestr;
