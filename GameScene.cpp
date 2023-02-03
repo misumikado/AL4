@@ -45,18 +45,18 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// 背景スプライト生成
 	spriteBG = Sprite::Create(1, { 0.0f,0.0f });
 	// 3Dオブジェクト生成
-	object3d = Object3d::Create();
+	object3d = Object3d::Create("ground");
 	object3d->Update();
 
 	boxObject = Object3d::Create();
 	boxObject->Update();
 
 	//球の初期値を設定
-	sphere.center = XMVectorSet(0, 2, 0, 1);//法線ベクトル
+	sphere.center = XMVectorSet(0, 0, 0, 1);//法線ベクトル
 	sphere.radius = 1.0f;//半径
 	//平面の初期値を設定
 	plane.normal = XMVectorSet(0, 1, 0, 0);//法線ベクトル
-	plane.distance = 0.0f;//原点(0,0,0)からの距離
+	plane.distance = -6.0f;//原点(0,0,0)からの距離
 }
 
 void GameScene::Update()
@@ -64,40 +64,27 @@ void GameScene::Update()
 	// オブジェクト移動
 	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
 	{
+		XMVECTOR moveY = XMVectorSet(0, 1.0f, 0, 0);
+		XMVECTOR moveX = XMVectorSet(1.0f, 0, 0, 0);
 		// 現在の座標を取得
 		XMFLOAT3 position = object3d->GetPosition();
 
 		// 移動後の座標を計算
-		if (input->PushKey(DIK_UP)) { position.y += 1.0f; }
-		else if (input->PushKey(DIK_DOWN)) { position.y -= 1.0f; }
-		if (input->PushKey(DIK_RIGHT)) { position.x += 1.0f; }
-		else if (input->PushKey(DIK_LEFT)) { position.x -= 1.0f; }
+		if (input->PushKey(DIK_UP)) {
+			sphere.center.m128_f32[1] -= 1.0f;
+		}
+		else if (input->PushKey(DIK_DOWN)) {
+			sphere.center.m128_f32[1] += 1.0f;
+		}
+		if (input->PushKey(DIK_RIGHT)) {
+			sphere.center.m128_f32[0] += 1.0f;
+		}
+		else if (input->PushKey(DIK_LEFT)) {
+			sphere.center.m128_f32[0] -= 1.0f;
+		}
 
 		// 座標の変更を反映
-		object3d->SetPosition(position);
-	}
-
-	// カメラ移動
-	if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
-	{
-		XMVECTOR moveY = XMVectorSet(0, 1.0f, 0, 0);
-		XMVECTOR moveX = XMVectorSet(1.0f, 0, 0, 0);
-		if (input->PushKey(DIK_W)) {
-			Object3d::CameraMoveVector({ 0.0f,-1.0f,0.0f });
-			sphere.center -= moveY;
-		}
-		else if (input->PushKey(DIK_S)) {
-			Object3d::CameraMoveVector({ 0.0f,+1.0f,0.0f });
-			sphere.center += moveY;
-		}
-		if (input->PushKey(DIK_D)) {
-			Object3d::CameraMoveVector({ -1.0f,0.0f,0.0f });
-			sphere.center -= moveX;
-		}
-		else if (input->PushKey(DIK_A)) {
-			Object3d::CameraMoveVector({ +1.0f,0.0f,0.0f });
-			sphere.center += moveX;
-		}
+		object3d->SetPosition({ sphere.center.m128_f32[0],sphere.center.m128_f32[1],sphere.center.m128_f32[2] });
 	}
 
 	object3d->Update();
@@ -112,17 +99,6 @@ void GameScene::Update()
 		sprite1->SetPosition(position);
 	}
 
-	////球移動
-	//{
-	//	XMVECTOR moveY = XMVectorSet(0, 0.01f, 0, 0);
-	//	if (input->PushKey(DIK_NUMPAD8)) { sphere.center += moveY; }
-	//	else if (input->PushKey(DIK_NUMPAD2)) { sphere.center -= moveY; }
-
-	//	XMVECTOR moveX = XMVectorSet(0.01f, 0, 0, 0);
-	//	if (input->PushKey(DIK_NUMPAD6)) { sphere.center += moveX; }
-	//	else if (input->PushKey(DIK_NUMPAD4)) { sphere.center -= moveX; }
-	//}
-
 	//stringstreamで変数の値を埋め込んで整形する
 	std::ostringstream spherestr;
 	spherestr << "Sphere:("
@@ -133,16 +109,11 @@ void GameScene::Update()
 
 	debugText.Print(spherestr.str(), 50, 180, 1.0f);
 
-	////球と平面の当たり判定
-	//bool hit = Collision::CheckSphere2Plane(sphere, plane);
-	//if (hit) {
-	//	debugText.Print("HIT", 50, 200, 1.0f);
-	//}
-
 	//球と平面の当たり判定
 	XMVECTOR inter;
 	bool hit = Collision::CheckSphere2Plane(sphere, plane, &inter);
 	if (hit) {
+		boxObject->SetColor({ 1,0,0,1 });
 		debugText.Print("HIT", 50, 200, 1.0f);
 		//stringstreamをリセットし、交点座標を埋め込む
 		spherestr.str("");
@@ -155,8 +126,12 @@ void GameScene::Update()
 
 		debugText.Print(spherestr.str(), 50, 220, 1.0f);
 	}
+	else {
+		boxObject->SetColor({ 1,1,1,1 });
+	}
 
 	object3d->Update();
+	boxObject->Update();
 }
 
 void GameScene::Draw()
@@ -168,7 +143,6 @@ void GameScene::Draw()
 	// 背景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
 	// 背景スプライト描画
-	//spriteBG->Draw();
 
 	/// <summary>
 	/// ここに背景スプライトの描画処理を追加できる
@@ -201,15 +175,12 @@ void GameScene::Draw()
 	// 前景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
 
-	//sprite1->Draw();
-	//sprite2->Draw();
-
 	/// <summary>
 	/// ここに前景スプライトの描画処理を追加できる
 	/// </summary>
 
 	// デバッグテキストの描画
-	debugText.DrawAll(cmdList);
+	//debugText.DrawAll(cmdList);
 
 	// スプライト描画後処理
 	Sprite::PostDraw();

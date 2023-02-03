@@ -35,8 +35,6 @@ XMFLOAT3 Object3d::target = { 0, 0, 0 };
 XMFLOAT3 Object3d::up = { 0, 1, 0 };
 D3D12_VERTEX_BUFFER_VIEW Object3d::vbView{};
 D3D12_INDEX_BUFFER_VIEW Object3d::ibView{};
-//Object3d::VertexPosNormalUv Object3d::vertices[vertexCount];
-//unsigned short Object3d::indices[planeCount * 3];
 std::vector<Object3d::VertexPosNormalUv> Object3d::vertices;
 std::vector<unsigned short> Object3d::indices;
 Object3d::Material Object3d::material;
@@ -56,14 +54,6 @@ void Object3d::StaticInitialize(ID3D12Device* device, int window_width, int wind
 
 	// パイプライン初期化
 	InitializeGraphicsPipeline();
-
-	// テクスチャ読み込み
-	//LoadTexture("Resources/triangle_mat/","tex1.png");
-
-
-	// モデル生成
-	CreateModel();
-
 }
 
 void Object3d::PreDraw(ID3D12GraphicsCommandList* cmdList)
@@ -88,7 +78,7 @@ void Object3d::PostDraw()
 	Object3d::cmdList = nullptr;
 }
 
-Object3d* Object3d::Create()
+Object3d* Object3d::Create(const std::string& modelName)
 {
 
 	// 3Dオブジェクトのインスタンスを生成
@@ -104,6 +94,7 @@ Object3d* Object3d::Create()
 		return nullptr;
 	}
 
+	object3d->CreateModel(modelName);
 	//スケールをセット
 	float scale_val = 5;
 	object3d->scale = { scale_val,scale_val,scale_val };
@@ -252,6 +243,11 @@ void Object3d::InitializeGraphicsPipeline()
 			D3D12_APPEND_ALIGNED_ELEMENT,
 			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
 		},
+		{ // 色(1行で書いたほうが見やすい)
+			"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+		}
 	};
 
 	// グラフィックスパイプラインの流れを設定
@@ -472,16 +468,15 @@ bool Object3d::LoadTexture(const std::string& directoryPath, const std::string& 
 	return true;
 }
 
-void Object3d::CreateModel()
+void Object3d::CreateModel(const std::string& modelName)
 
 {
 	//ファイルストリーム
 	std::ifstream file;
 	//.objファイルを開く
 	//file.open("Resources/triangle_tex/triangle_tex.obj");
-	const string modelname = "sphere";
-	const string filename = modelname + ".obj";//"triangle_mat.obj"
-	const string directoryPath = "Resources/" + modelname + "/";//"Resources/triangle_mat/"
+	const string filename = modelName + ".obj";//"triangle_mat.obj"
+	const string directoryPath = "Resources/" + modelName + "/";//"Resources/triangle_mat/"
 	file.open(directoryPath + filename);//"Resources/triangle_mat/triangle_mat.obj"
 	//ファイルオープン失敗をチェック
 	if (file.fail()) {
@@ -521,10 +516,6 @@ void Object3d::CreateModel()
 			line_stream >> position.z;
 			//座標データに追加
 			positions.emplace_back(position);
-			//頂点データに追加
-			//VertexPosNormalUv vertex{};
-			//vertex.pos = position;
-			//vertices.emplace_back(vertex);
 		}
 		//先頭文字がvtならテクスチャ
 		if (key == "vt") {
@@ -577,125 +568,6 @@ void Object3d::CreateModel()
 	HRESULT result = S_FALSE;
 
 	std::vector<VertexPosNormalUv> realVertices;
-	//// 頂点座標の計算（重複あり）
-	//{
-	//	realVertices.resize((division + 1) * 2);
-	//	int index = 0;
-	//	float zValue;
-
-	//	// 底面
-	//	zValue = prizmHeight / 2.0f;
-	//	for (int i = 0; i < division; i++)
-	//	{
-	//		XMFLOAT3 vertex;
-	//		vertex.x = radius * sinf(XM_2PI / division * i);
-	//		vertex.y = radius * cosf(XM_2PI / division * i);
-	//		vertex.z = zValue;
-	//		realVertices[index++].pos = vertex;
-	//	}
-	//	realVertices[index++].pos = XMFLOAT3(0, 0, zValue);	// 底面の中心点
-	//	// 天面
-	//	zValue = -prizmHeight / 2.0f;
-	//	for (int i = 0; i < division; i++)
-	//	{
-	//		XMFLOAT3 vertex;
-	//		vertex.x = radius * sinf(XM_2PI / division * i);
-	//		vertex.y = radius * cosf(XM_2PI / division * i);
-	//		vertex.z = zValue;
-	//		realVertices[index++].pos = vertex;
-	//	}
-	//	realVertices[index++].pos = XMFLOAT3(0, 0, zValue);	// 天面の中心点
-	//}
-
-	//// 頂点座標の計算（重複なし）
-	//{
-	//	int index = 0;
-	//	// 底面
-	//	for (int i = 0; i < division; i++)
-	//	{
-	//		unsigned short index0 = i + 1;
-	//		unsigned short index1 = i;
-	//		unsigned short index2 = division;
-
-	//		vertices[index++] = realVertices[index0];
-	//		vertices[index++] = realVertices[index1];
-	//		vertices[index++] = realVertices[index2]; // 底面の中心点
-	//	}
-	//	// 底面の最後の三角形の1番目のインデックスを0に書き換え
-	//	vertices[index - 3] = realVertices[0];
-
-	//	int topStart = division + 1;
-	//	// 天面
-	//	for (int i = 0; i < division; i++)
-	//	{
-	//		unsigned short index0 = topStart + i;
-	//		unsigned short index1 = topStart + i + 1;
-	//		unsigned short index2 = topStart + division;
-
-	//		vertices[index++] = realVertices[index0];
-	//		vertices[index++] = realVertices[index1];
-	//		vertices[index++] = realVertices[index2]; // 天面の中心点
-	//	}
-	//	// 天面の最後の三角形の1番目のインデックスを0に書き換え
-	//	vertices[index - 2] = realVertices[topStart];
-
-	//	// 側面
-	//	for (int i = 0; i < division; i++)
-	//	{
-	//		unsigned short index0 = i + 1;
-	//		unsigned short index1 = topStart + i + 1;
-	//		unsigned short index2 = i;
-	//		unsigned short index3 = topStart + i;
-
-	//		if (i == division - 1)
-	//		{
-	//			index0 = 0;
-	//			index1 = topStart;
-	//		}
-
-	//		vertices[index++] = realVertices[index0];
-	//		vertices[index++] = realVertices[index1];
-	//		vertices[index++] = realVertices[index2];
-
-	//		vertices[index++] = realVertices[index2];
-	//		vertices[index++] = realVertices[index1];
-	//		vertices[index++] = realVertices[index3];
-	//	}
-	//}
-
-	//// 頂点インデックスの設定
-	//{
-	//	for (int i = 0; i < _countof(indices); i++)
-	//	{
-	//		indices[i] = i;
-	//	}
-	//}
-
-	//// 法線方向の計算
-	//for (int i = 0; i < _countof(indices) / 3; i++)
-	//{// 三角形１つごとに計算していく
-	//	// 三角形のインデックスを取得
-	//	unsigned short index0 = indices[i * 3 + 0];
-	//	unsigned short index1 = indices[i * 3 + 1];
-	//	unsigned short index2 = indices[i * 3 + 2];
-	//	// 三角形を構成する頂点座標をベクトルに代入
-	//	XMVECTOR p0 = XMLoadFloat3(&vertices[index0].pos);
-	//	XMVECTOR p1 = XMLoadFloat3(&vertices[index1].pos);
-	//	XMVECTOR p2 = XMLoadFloat3(&vertices[index2].pos);
-	//	// p0→p1ベクトル、p0→p2ベクトルを計算
-	//	XMVECTOR v1 = XMVectorSubtract(p1, p0);
-	//	XMVECTOR v2 = XMVectorSubtract(p2, p0);
-	//	// 外積は両方から垂直なベクトル
-	//	XMVECTOR normal = XMVector3Cross(v1, v2);
-	//	// 正規化（長さを1にする)
-	//	normal = XMVector3Normalize(normal);
-	//	// 求めた法線を頂点データに代入
-	//	XMStoreFloat3(&vertices[index0].normal, normal);
-	//	XMStoreFloat3(&vertices[index1].normal, normal);
-	//	XMStoreFloat3(&vertices[index2].normal, normal);
-	//}
-
-	//UINT sizeVB = static_cast<UINT>(sizeof(vertices));
 
 	UINT sizeVB = static_cast<UINT>(sizeof(VertexPosNormalUv) * vertices.size());
 	UINT sizeIB = static_cast<UINT>(sizeof(unsigned short) * indices.size());
@@ -740,12 +612,6 @@ void Object3d::CreateModel()
 	unsigned short* indexMap = nullptr;
 	result = indexBuff->Map(0, nullptr, (void**)&indexMap);
 	if (SUCCEEDED(result)) {
-
-		// 全インデックスに対して
-		//for (int i = 0; i < _countof(indices); i++)
-		//{
-		//	indexMap[i] = indices[i];	// インデックスをコピー
-		//}
 		std::copy(indices.begin(), indices.end(), indexMap);
 
 		indexBuff->Unmap(0, nullptr);
@@ -786,8 +652,6 @@ bool Object3d::Initialize()
 		IID_PPV_ARGS(&constBuffB0));
 	assert(SUCCEEDED(result));
 
-	
-
 	// 定数バッファの生成
 	result = device->CreateCommittedResource(
 		&heapProps,
@@ -799,7 +663,6 @@ bool Object3d::Initialize()
 	assert(SUCCEEDED(result));
 
 	return true;
-
 }
 
 void Object3d::Update()
@@ -830,6 +693,7 @@ void Object3d::Update()
 	// 定数バッファへデータ転送
 	ConstBufferDataB0* constMap = nullptr;
 	result = constBuffB0->Map(0, nullptr, (void**)&constMap);
+	constMap->color = color;
 	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
 	constBuffB0->Unmap(0, nullptr);
 

@@ -5,6 +5,7 @@
 #include <d3d12.h>
 #include <DirectXMath.h>
 #include <d3dx12.h>
+#include <string>
 
 /// <summary>
 /// 3Dオブジェクト
@@ -32,7 +33,7 @@ public: // サブクラス
 	// 定数バッファ用データ構造体B0
 	struct ConstBufferDataB0
 	{
-		//XMFLOAT4 color;	// 色 (RGBA)
+		XMFLOAT4 color;	// 色 (RGBA)
 		XMMATRIX mat;	// ３Ｄ変換行列
 	};
 	// 定数バッファ用データ構造体B1
@@ -94,7 +95,7 @@ public: // 静的メンバ関数
 	/// 3Dオブジェクト生成
 	/// </summary>
 	/// <returns></returns>
-	static Object3d* Create();
+	static Object3d* Create(const std::string& modelName = "sphere");
 
 	/// <summary>
 	/// 視点座標の取得
@@ -211,7 +212,7 @@ private:// 静的メンバ関数
 	/// <summary>
 	/// モデル作成
 	/// </summary>
-	static void CreateModel();
+	static void CreateModel(const std::string& modelName);
 
 	/// <summary>
 	/// ビュー行列を更新
@@ -241,6 +242,9 @@ public: // メンバ関数
 	/// </summary>
 	/// <param name="position">座標</param>
 	void SetPosition(const XMFLOAT3& position) { this->position = position; }
+
+	// 色変更
+	void SetColor(const XMFLOAT4 color_ = { 1,1,1,1 }) { color = color_; }
 
 	/// <summary>
 	/// マテリアル読み込み
